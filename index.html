@@ -44,6 +44,7 @@ input[type="number"]{width:100%;border:1px solid var(--border);border-radius:10p
 .cell-bad{background:var(--badbg);}
 .grid2{display:grid;grid-template-columns:1fr;gap:12px;padding:12px 14px;}
 .span2{grid-column:1 / -1;}
+.note-input{width:100%;border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:13px;background:white;box-sizing:border-box;}
 @media (min-width: 980px){.grid2{grid-template-columns:1fr 1fr;}}
 @media print {.card, .sheet, table { break-inside: avoid; }}
 .card{border:1px solid var(--border);border-radius:14px;background:#fff;padding:12px;}
@@ -136,7 +137,7 @@ input[type="number"]{width:100%;border:1px solid var(--border);border-radius:10p
               <td class="center"><input type="number" min="0" step="1" inputmode="decimal" id="dist2" placeholder="e.g. 100"></td>
               <td class="num" id="r2Leq"></td>
               <td class="num" id="r2Lmax"></td>
-              <td class="small"> </td>
+              <td><textarea class="note-input" rows="2" placeholder="Enter notes"></textarea></td>
             </tr>
           </table>
         </div>
