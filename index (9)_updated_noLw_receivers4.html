@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Leq & Lmax calculator</title>
+<style>
+
+:root{
+  --text:#111827;
+  --muted:#6b7280;
+  --border:#e5e7eb;
+  --bg:#ffffff;
+  --sheet:#ffffff;
+  --ok:#16a34a;
+  --bad:#dc2626;
+  --okbg: rgba(22,163,74,.10);
+  --badbg: rgba(220,38,38,.10);
+}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;background:var(--bg);color:var(--text);}
+.container{max-width:1180px;margin:22px auto;padding:0 14px 34px;}
+.h1{font-size:25px;font-weight:700;margin:0 0 6px;}
+.h2{font-size:15px;font-weight:700;margin:0 0 6px;}
+.p1{font-size:15px;color:var(--muted);margin:0 0 14px;line-height:1.45;}
+.p{font-size:13px;color:var(--muted);margin:0 0 14px;line-height:1.45;}
+.i{font-style: italic; font-size:13px;color:var(--muted);margin:0 0 14px;line-height:1.45;}
+  .sheet1{background:var(--sheet);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 1px 0 rgba(0,0,0,.03);padding:14px;margin-bottom: 14px;}
+.sheet{background:var(--sheet);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 1px 0 rgba(0,0,0,.03);}
+table{width:100%;border-collapse:collapse;}
+td,th{border:1px solid var(--border);padding:8px 10px;font-size:13px;vertical-align: middle; text-align: left;}
+th{background:rgba(242,203,0,1);font-weight:700;}
+.small{font-size:12px;color:var(--muted);}
+select{width:100%;border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:13px;background:white;}
+input[type="number"]{width:100%;border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:13px;background:white;box-sizing:border-box;}
+.num{text-align:center;}
+.center{text-align:center;}
+.left{text-align:left;}
+.logo{height: 100px; width: auto; display: block; margin-bottom:15px}
+.table-scroll{overflow-x:auto; width:100%;}
+.badge{display:inline-block;padding:3px 8px;border-radius:999px;border:1px solid var(--border);font-size:12px;background:#fff;margin-right:6px;margin-top:6px;}
+.ok{color:var(--ok);font-weight:700;}
+.bad{color:var(--bad);font-weight:700;}
+.cell-ok{background:var(--okbg);}
+.cell-bad{background:var(--badbg);}
+.grid2{display:grid;grid-template-columns:1fr;gap:12px;padding:12px 14px;}
+.span2{grid-column:1 / -1;}
+.note-input{width:100%;border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-family: Arial;font-size:13px;background:white;box-sizing:border-box;}
+@media (min-width: 980px){.grid2{grid-template-columns:1fr 1fr;}}
+@media print {.card, .sheet, table { break-inside: avoid; }}
+.card{border:1px solid var(--border);border-radius:14px;background:#fff;padding:12px;}
+.card h2{font-size:14px;margin:0 0 10px;}
+.pdf-btn {background:#fff;border: 1px solid var(--border);border-radius:10px;padding: 10px 16px;border-radius: 10px;font-size: 13px;font-weight: 600;cursor: pointer;margin-bottom: 16px;}
+.pdf-btn:hover {opacity: 0.9;}
+.link-btn {display: inline-block;background:#fff;border: 1px solid var(--border);border-radius:10px;padding: 10px 16px;font-size: 13px;font-weight: 600;cursor: pointer;margin-bottom: 16px;}
+
+@media print {
+  .no-print { display:none !important; }
+  body { background:#fff; }
+  .container{ margin:0; max-width:none; }
+}
+</style>
+</head>
+<body>
+<div class="container" id="pdfArea">
+  <img src="resonate-logo.png" alt="Resonate" class="logo">
+  <div class="h1">L<sub>eq</sub> &amp; L<sub>max</sub> calculator</div>
+  <div class="p1">Simple screening calculator for two receivers. Enter source(s) and distances to calculate predicted levels.</div>
+
+  <button class="pdf-btn no-print" type="button" id="printBtn">Print / Save PDF</button>
+
+  <div class="sheet">
+    <div class="grid2">
+      <div class="card">
+        <h2>L<sub>eq</sub> sources</h2>
+        <div class="small">Total Lw per item = base Lw + 10·log10(number) + 10·log10(minutes/15). Barrier toggle applies −5 dB to that item.</div>
+        <div class="table-scroll" style="margin-top:10px;">
+          <table id="leqTable">
+            <tr>
+              <th style="width:46%;">Source</th>
+              <th style="width:14%;" class="center">Number</th>
+              <th style="width:16%;" class="center">Operation min in 15 min</th>
+              <th style="width:16%;" class="center">Barrier</th>
+              <th style="width:10%;" class="num">Item Lw</th>
+            </tr>
+            <tbody id="leqRows"></tbody>
+            <tr>
+              <th colspan="4" class="num">TOTAL Lw dB(A)</th>
+              <th class="num" id="leqTotal">0</th>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>L<sub>max</sub> source</h2>
+        <div class="small">Total Lw = base Lw + 10·log10(number). Barrier toggle applies −5 dB.</div>
+        <div class="table-scroll" style="margin-top:10px;">
+          <table id="lmaxTable">
+            <tr>
+              <th style="width:56%;">Source</th>
+              <th style="width:16%;" class="center">Number</th>
+              <th style="width:16%;" class="center">Barrier</th>
+              <th style="width:12%;" class="num">Lw</th>
+            </tr>
+            <tbody id="lmaxRows"></tbody>
+            <tr>
+              <th colspan="3" class="num">TOTAL Lw</th>
+              <th class="num" id="lmaxTotal">0</th>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid2" style="padding-top:0;">
+      <div class="card span2">
+        <h2>Receivers</h2>
+        <div class="small">Predicted level = Total Lw − 20·log10(distance) − 8.</div>
+        <div class="table-scroll" style="margin-top:10px;">
+          <table>
+            <tr>
+              <th style="width:15%;">Receiver</th>
+              <th style="width:15%;" class="left">Distance (m)</th>
+              <th style="width:15%;" class="num">Predicted L<sub>eq</sub> (dB)</th>
+              <th style="width:15%;" class="num">Predicted L<sub>max</sub> (dB)</th>
+              <th style="width:40%;" class="left">Notes</th>
+            </tr>
+            <tr>
+              <td><b>Receiver 1</b></td>
+              <td class="center"><input type="number" min="0" step="1" inputmode="decimal" id="dist1" placeholder="e.g. 10"></td>
+              <td class="num" id="r1Leq"></td>
+              <td class="num" id="r1Lmax"></td>
+              <td><textarea class="note-input" rows="2" placeholder="Enter notes"></textarea></td>
+            </tr>
+            <tr>
+              <td><b>Receiver 2</b></td>
+              <td class="center"><input type="number" min="0" step="1" inputmode="decimal" id="dist2" placeholder="e.g. 20"></td>
+              <td class="num" id="r2Leq"></td>
+              <td class="num" id="r2Lmax"></td>
+              <td><textarea class="note-input" rows="2" placeholder="Enter notes"></textarea></td>
+            </tr>
+             <tr>
+              <td><b>Receiver 3</b></td>
+              <td class="center"><input type="number" min="0" step="1" inputmode="decimal" id="dist3" placeholder="e.g. 30"></td>
+              <td class="num" id="r3Leq"></td>
+              <td class="num" id="r3Lmax"></td>
+              <td><textarea class="note-input" rows="2" placeholder="Enter notes"></textarea></td>
+            </tr>
+              <tr>
+              <td><b>Receiver 4</b></td>
+              <td class="center"><input type="number" min="0" step="1" inputmode="decimal" id="dist4" placeholder="e.g. 40"></td>
+              <td class="num" id="r4Leq"></td>
+              <td class="num" id="r4Lmax"></td>
+              <td><textarea class="note-input" rows="2" placeholder="Enter notes"></textarea></td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const SOURCE_LIBRARY_ALL = [{"name": "Small truck idling", "lw": 90.3}, {"name": "Small truck driving slowly", "lw": 99.3}, {"name": "Small truck exhaust", "lw": 91.3}, {"name": "Small truck accelerating - Lmax", "lw": 106.3}, {"name": "Medium truck idling", "lw": 93.5}, {"name": "Medium truck driving slowly", "lw": 102.3}, {"name": "Medium truck exhaust", "lw": 94.3}, {"name": "Medium truck accelerating - Lmax", "lw": 109.2}, {"name": "Large truck idling", "lw": 96.1}, {"name": "Large truck driving slowly", "lw": 105.2}, {"name": "Large truck exhaust", "lw": 97.2}, {"name": "Large truck accelerating - Lmax", "lw": 112.2}, {"name": "Refrigerated truck condenser (small/medium truck)", "lw": 92.4}, {"name": "Refrigerated truck condenser (large truck)", "lw": 98.5}, {"name": "Truck air brake release Lmax", "lw": 111.1}, {"name": "Truck air horn Lmax", "lw": 118.7}, {"name": "Car idling", "lw": 75.0}, {"name": "Car driving slowly", "lw": 81.0}, {"name": "Van idling", "lw": 80.0}, {"name": "Van driving slowly", "lw": 86.0}, {"name": "Car engine start - Lmax", "lw": 98.3}, {"name": "Car door slam - Lmax", "lw": 98.0}, {"name": "Speaker box", "lw": 83.8}, {"name": "Speaker box - Lmax", "lw": 99.7}, {"name": "Outdoor patron", "lw": 74.2}, {"name": "Voice at pickup window", "lw": 68.2}, {"name": "Electric forklift - typical activity", "lw": 84.1}, {"name": "Gas forklift - typical activity", "lw": 91.7}, {"name": "Diesel forklift - typical activity", "lw": 100.1}, {"name": "Forklift clanging forks - Lmax", "lw": 110.8}, {"name": "Forklift horn - Lmax", "lw": 111.3}, {"name": "Warehouse - internal reverberant level", "lw": 80.7}, {"name": "Vacuum", "lw": 88.1}, {"name": "Dog barking - SEL per bark", "lw": 101.0}, {"name": "Dog barking - Lmax", "lw": 95.0}, {"name": "Dog wash", "lw": 86.0}, {"name": "Car wash - manual", "lw": 96.0}, {"name": "Car wash - auto", "lw": 91.2}, {"name": "Air Conditioning Condenser (High Fan Speed) - Supermarket Lw 85 dB(A)", "lw": 84.5}, {"name": "Refrigeration Condenser (High Fan Speed) - Supermarket Lw 88 dB(A)", "lw": 87.6}, {"name": "Small exhaust fan (toilet, garbage room) - Lw 60 dB(A)", "lw": 60.4}, {"name": "Small kitchen exhaust fan - Lw 70 dB(A)", "lw": 70.4}, {"name": "Carpark exhaust fan Lw 85 dB(A) - outlet", "lw": 85.1}, {"name": "Large General exhaust fan—Lw 94 dB(A) / Lp 75 dB(A) at 3m", "lw": 94.0}, {"name": "Condenser - small single fan outdoor unit (Lw 65 dB(A))", "lw": 65.7}, {"name": "Condenser - medium double fan outdoor unit (Lw 70 dB(A))", "lw": 70.7}, {"name": "Condenser - large double fan outdoor unit (Lw 80 dB(A))", "lw": 75.7}, {"name": "Evaporative cooler—Braemar RPB600 Radiated—Lw 80 dB(A)", "lw": 80.3}, {"name": "Evaporative cooler—Braemar RPB700 Radiated—Lw 78 dB(A)", "lw": 77.9}, {"name": "Evaporative cooler—Braemar RPB900 Radiated—Lw 84 dB(A)", "lw": 84.6}, {"name": "Evaporative cooler—Braemar RPB1000 Radiated—Lw 89 dB(A)", "lw": 89.9}, {"name": "Evaporative cooler—Braemar RPB1200 Radiated—Lw 88 dB(A)", "lw": 88.9}, {"name": "Evaporative cooler—Braemar RPB1300 Radiated—Lw 89 dB(A)", "lw": 89.9}, {"name": "Evaporative cooler—Braemar RPB1400 Radiated—Lw 93 dB(A)", "lw": 92.9}, {"name": "Evaporative cooler—Braemar RPB1500 Radiated—Lw 94 dB(A)", "lw": 94.3}, {"name": "Evaporative cooler—Braemar RPB1800 Radiated—Lw 96 dB(A)", "lw": 96.5}, {"name": "Carrier air cooled chillers (screw fixed speed)—30XBE 500 Standard Lw 99 dB(A)", "lw": 99.0}, {"name": "Carrier air cooled chillers (screw fixed speed)—30XBE 500 Standard+Option15 Lw 95 dB(A)", "lw": 95.0}, {"name": "Carrier air cooled chillers (screw fixed speed)—30XBE 500  Standard+Option15LS Lw 91 dB(A)", "lw": 91.0}, {"name": "Carrier air cooled chillers (screw fixed speed)—30XBE 500  Standard+Option15LS+ Lw 89 dB(A)", "lw": 88.8}, {"name": "Carrier air cooled chillers (screw fixed speed)—30XBE 350 Standard Lw 99 dB(A)", "lw": 99.1}, {"name": "Carrier air cooled chillers (screw fixed speed)—30XBE 350  Standard+Option15 Lw 94 dB(A)", "lw": 94.0}, {"name": "Carrier air cooled chillers (screw fixed speed)—30XBE 350  Standard+Option15LS Lw 87 dB(A)", "lw": 87.1}, {"name": "Daikin air colled single screw chiller / heat pump Lw 102 dB(A)", "lw": 102.4}, {"name": "Cooling Tower (single unit, 5.5kW, 2.28x2.28x3.25mm) Lw 87 dB(A)", "lw": 87.4}, {"name": "Smoke Spill Fans—outlet—Lw 102 dB(Z) / Lw 95 dB(A) / Lp 75 dB(A) @ 3m", "lw": 95.5}, {"name": "Large Dust Extractor - Lw 97 dB(A) / 75 dB(A) @ 5m", "lw": 96.5}, {"name": "Medium Dust Extractor - Lw 91 dB(A) / 68 dB(A) @ 5m", "lw": 90.5}, {"name": "Enclosed Generator Set 220kVA—Cummins C220 D5e 50 Hz (enclosed  with genset mounted muffler - @75% load 96 dB(A) Lw)", "lw": 95.8}, {"name": "Enclosed Generator Set 220kVA —Cummins C220 D5e 50 Hz (enclosed  with genset mounted muffler - @100% load 97 dB(A) Lw)", "lw": 96.6}, {"name": "Enclosed Generator Set 220kVA —Cummins C220 D5e 50 Hz (enclosed  with genset mounted muffler - @110% load 97 dB(A) Lw)", "lw": 96.8}, {"name": "Open Generator—Cummins C1100 D5 QST30-G4 50 Hz Diesel (100% Prime - engine, no exhaust no muffler)", "lw": 117.1}, {"name": "Open Generator—Cummins C1100 D5 QST30-G4 50 Hz Diesel (100% Prime - open exhaust)", "lw": 126.1}, {"name": "Firepump PowerMaXX DP4400N 2400 RPM 101 dB(A) @ 1m", "lw": 111.7}, {"name": "10 children: 0 - 2 years", "lw": 77.6}, {"name": "10 children: 2 - 3 years", "lw": 84.6}, {"name": "10 children: 3 - 5 years", "lw": 86.6}, {"name": "Patron in bar setting (SA)", "lw": 74.2}, {"name": "Vertical consumption ('worst-case' crowd) - per person", "lw": 88.0}, {"name": "Taverns with significant food offerings - per person", "lw": 83.0}, {"name": "Restaurant dining - per person", "lw": 78.0}, {"name": "Small smoking areas (<40 patrons) - per person", "lw": 73.0}, {"name": "Male talker - normal vocal effort", "lw": 58.0}, {"name": "Male talker - raised vocal effort", "lw": 66.3}, {"name": "Male talker - loud vocal effort", "lw": 75.6}, {"name": "Background music - conversation and normal effort - Leq", "lw": 70.0}, {"name": "Background music - conversation and normal effort - L10", "lw": 72.0}, {"name": "Background music - conversation and raised effort - Leq", "lw": 75.0}, {"name": "Background music - conversation and raised effort - L10", "lw": 77.0}, {"name": "Foreground music - Acoustic amplified - Leq", "lw": 80.0}, {"name": "Foreground music - Acoustic amplified - L10", "lw": 82.0}, {"name": "Foreground music - Ambient DJ - Leq", "lw": 85.2}, {"name": "Foreground music - Ambient DJ - L10", "lw": 87.2}, {"name": "Foreground music - Function room / wedding - Leq", "lw": 89.6}, {"name": "Foreground music - Function room / wedding - L10", "lw": 91.6}, {"name": "Foreground music - nightclub - Leq", "lw": 95.4}, {"name": "Foreground music - nightclub - L10", "lw": 97.4}, {"name": "Gynmasium - general sporting activity, overall reverberant level", "lw": 75.2}, {"name": "Car driving slowly < 30 km/h", "lw": 47.0}, {"name": "Electric forklift - driving", "lw": 53.0}, {"name": "Gas forklift - driving", "lw": 62.0}, {"name": "Diesel forklift - driving", "lw": 62.2}];
+const SOURCE_LIBRARY = SOURCE_LIBRARY_ALL.filter(s => !/lmax/i.test(String(s.name)));
+const SOURCE_LIBRARY_LMAX = SOURCE_LIBRARY_ALL.filter(s => /lmax/i.test(String(s.name)));
+
+// ---------- helpers ----------
+function log10(x){ return Math.log(x) / Math.LN10; }
+function round1(x){
+  const n = Number(x);
+  if (!Number.isFinite(n)) return "";
+  return String(Math.round(n*10)/10);
+}
+function energeticSum(dBArray){
+  let sum = 0;
+  for (const v of dBArray){
+    const n = Number(v);
+    if (Number.isFinite(n) && n > -100) sum += Math.pow(10, n/10);
+  }
+  return sum > 0 ? 10*log10(sum) : 0;
+}
+function rowTotalLeq(baseLw, n, minutes, barrierYes){
+  if (!Number.isFinite(baseLw)) return NaN;
+  const N = Number(n);
+  if (!Number.isFinite(N) || N <= 0) return NaN;
+
+  let m = (minutes === "" || minutes === null || minutes === undefined) ? 15 : Number(minutes);
+  if (!Number.isFinite(m)) m = 15;
+  if (m <= 0) return NaN;
+
+  let lw = baseLw + 10*log10(N) + 10*log10(m/15);
+  if (barrierYes) lw -= 5;
+  return lw;
+}
+function rowTotalLmax(baseLw, n, barrierYes){
+  if (!Number.isFinite(baseLw)) return NaN;
+  const N = Number(n);
+  if (!Number.isFinite(N) || N <= 0) return NaN;
+
+  let lw = baseLw + 10*log10(N);
+  if (barrierYes) lw -= 5;
+  return lw;
+}
+function predictLp(totalLw, dist){
+  const d = Number(dist);
+  const lw = Number(totalLw);
+  if (!Number.isFinite(lw) || lw <= 0) return "";
+  if (!Number.isFinite(d) || d <= 0) return "";
+  return round1(lw - 20*log10(d) - 8);
+}
+
+// ---------- UI builders ----------
+function makeSourceSelect(options){
+  const sel = document.createElement('select');
+  const blank = document.createElement('option');
+  blank.value = "";
+  blank.textContent = "— Select —";
+  sel.appendChild(blank);
+  for (const s of options){
+    const o = document.createElement('option');
+    o.value = String(s.lw);
+    o.textContent = s.name;
+    sel.appendChild(o);
+  }
+  return sel;
+}
+function makeYesNoSelect(){
+  const sel = document.createElement('select');
+  const o1 = document.createElement('option'); o1.value="no"; o1.textContent="No";
+  const o2 = document.createElement('option'); o2.value="yes"; o2.textContent="Yes";
+  sel.appendChild(o1); sel.appendChild(o2);
+  return sel;
+}
+function makeNumInput(defaultVal){
+  const inp = document.createElement('input');
+  inp.type = "number";
+  inp.min = "0";
+  inp.step = "1";
+  inp.inputMode = "decimal";
+  if (defaultVal !== undefined) inp.value = defaultVal;
+  return inp;
+}
+
+function buildLeqRows(count){
+  const tbody = document.getElementById('leqRows');
+  tbody.innerHTML = "";
+  for (let i=0;i<count;i++) {
+    const tr = document.createElement('tr');
+
+    const tdSrc = document.createElement('td');
+    const sel = makeSourceSelect(SOURCE_LIBRARY);
+    sel.id = "leq_src_" + i;
+    tdSrc.appendChild(sel);
+
+    const tdN = document.createElement('td'); tdN.className="center";
+    const inpN = makeNumInput(1);
+    inpN.id = "leq_n_" + i;
+    tdN.appendChild(inpN);
+
+    const tdM = document.createElement('td'); tdM.className="center";
+    const inpM = makeNumInput(15);
+    inpM.id = "leq_m_" + i;
+    tdM.appendChild(inpM);
+
+    const tdB = document.createElement('td'); tdB.className="center";
+    const selB = makeYesNoSelect();
+    selB.id = "leq_b_" + i;
+    tdB.appendChild(selB);
+
+    const tdLw = document.createElement('td'); tdLw.className="num";
+    tdLw.id = "leq_lw_" + i;
+
+    tr.appendChild(tdSrc);
+    tr.appendChild(tdN);
+    tr.appendChild(tdM);
+    tr.appendChild(tdB);
+    tr.appendChild(tdLw);
+
+    tbody.appendChild(tr);
+  }
+}
+
+function buildLmaxRow(){
+  const tbody = document.getElementById('lmaxRows');
+  tbody.innerHTML = "";
+
+  const tr = document.createElement('tr');
+
+  const tdSrc = document.createElement('td');
+  const sel = makeSourceSelect(SOURCE_LIBRARY_LMAX);
+  sel.id = "lmax_src";
+  tdSrc.appendChild(sel);
+
+  const tdN = document.createElement('td'); tdN.className="center";
+  const inpN = makeNumInput(1);
+  inpN.id = "lmax_n";
+  tdN.appendChild(inpN);
+
+  const tdB = document.createElement('td'); tdB.className="center";
+  const selB = makeYesNoSelect();
+  selB.id = "lmax_b";
+  tdB.appendChild(selB);
+
+  const tdLw = document.createElement('td'); tdLw.className="num";
+  tdLw.id = "lmax_lw";
+
+  tr.appendChild(tdSrc);
+  tr.appendChild(tdN);
+  tr.appendChild(tdB);
+  tr.appendChild(tdLw);
+  tbody.appendChild(tr);
+}
+
+function calcTotals(){
+  // Leq total
+  const leqItems = [];
+  const rows = document.querySelectorAll('#leqRows tr');
+  rows.forEach((tr, i) => {
+    const base = Number(document.getElementById('leq_src_' + i).value);
+    const n = document.getElementById('leq_n_' + i).value;
+    const m = document.getElementById('leq_m_' + i).value;
+    const barrier = document.getElementById('leq_b_' + i).value === "yes";
+    const lw = rowTotalLeq(base, n, m, barrier);
+    document.getElementById('leq_lw_' + i).textContent = Number.isFinite(lw) ? round1(lw) : "";
+    if (Number.isFinite(lw)) leqItems.push(lw);
+  });
+  const leqTotal = energeticSum(leqItems);
+  document.getElementById('leqTotal').textContent = leqItems.length ? round1(leqTotal) : "0";
+
+  // Lmax total (single row)
+  const baseLmax = Number(document.getElementById('lmax_src').value);
+  const nLmax = document.getElementById('lmax_n').value;
+  const bLmax = document.getElementById('lmax_b').value === "yes";
+  const lmaxTotal = rowTotalLmax(baseLmax, nLmax, bLmax);
+  document.getElementById('lmax_lw').textContent = Number.isFinite(lmaxTotal) ? round1(lmaxTotal) : "";
+  document.getElementById('lmaxTotal').textContent = Number.isFinite(lmaxTotal) ? round1(lmaxTotal) : "0";
+
+  // predictions (Receivers 1–4)
+  for (let i = 1; i <= 4; i++) {
+    const d = document.getElementById('dist' + i).value;
+    const leqEl = document.getElementById('r' + i + 'Leq');
+    const lmaxEl = document.getElementById('r' + i + 'Lmax');
+    if (leqEl) leqEl.textContent = predictLp(leqTotal, d);
+    if (lmaxEl) lmaxEl.textContent = predictLp(lmaxTotal, d);
+  }
+}
+
+function wireEvents(){
+  document.getElementById('pdfArea').addEventListener('input', (e)=>{
+    if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "SELECT")) calcTotals();
+  });
+  document.getElementById('printBtn').addEventListener('click', ()=> window.print());
+}
+
+// init
+buildLeqRows(6);
+buildLmaxRow();
+wireEvents();
+calcTotals();
+</script>
+</body>
+</html>
