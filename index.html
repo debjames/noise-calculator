@@ -62,7 +62,7 @@ input[type="number"]{width:100%;border:1px solid var(--border);border-radius:10p
 <body>
 <div class="container" id="pdfArea">
   <img src="resonate-logo.png" alt="Resonate" class="logo">
-  <div class="h1">Leq &amp; Lmax calculator</div>
+  <div class="h1">L<sub>eq</sub> &amp; L<sub>max</sub> calculator</div>
   <div class="p1">Simple screening calculator for two receivers. Enter source(s) and distances to calculate predicted levels.</div>
 
   <button class="pdf-btn no-print" type="button" id="printBtn">Print / Save PDF</button>
@@ -77,8 +77,8 @@ input[type="number"]{width:100%;border:1px solid var(--border);border-radius:10p
             <tr>
               <th style="width:46%;">Source</th>
               <th style="width:14%;" class="center">Number</th>
-              <th style="width:18%;" class="center">Operational min<br>in 15 min</th>
-              <th style="width:12%;" class="center">Barrier</th>
+              <th style="width:16%;" class="center">Operation min in 15 min</th>
+              <th style="width:16%;" class="center">Barrier</th>
               <th style="width:10%;" class="num">Item Lw</th>
             </tr>
             <tbody id="leqRows"></tbody>
@@ -91,14 +91,14 @@ input[type="number"]{width:100%;border:1px solid var(--border);border-radius:10p
       </div>
 
       <div class="card">
-        <h2>Night L<sub>max</sub> source</h2>
+        <h2>L<sub>max</sub> source</h2>
         <div class="small">Total Lw = base Lw + 10·log10(number). Barrier toggle applies −5 dB.</div>
         <div class="table-scroll" style="margin-top:10px;">
           <table id="lmaxTable">
             <tr>
-              <th style="width:58%;">Source</th>
+              <th style="width:56%;">Source</th>
               <th style="width:16%;" class="center">Number</th>
-              <th style="width:14%;" class="center">Barrier</th>
+              <th style="width:16%;" class="center">Barrier</th>
               <th style="width:12%;" class="num">Lw</th>
             </tr>
             <tbody id="lmaxRows"></tbody>
@@ -119,10 +119,10 @@ input[type="number"]{width:100%;border:1px solid var(--border);border-radius:10p
           <table>
             <tr>
               <th style="width:22%;">Receiver</th>
-              <th style="width:18%;" class="center">Distance (m)</th>
+              <th style="width:18%;" class="left">Distance (m)</th>
               <th style="width:20%;" class="num">Predicted L<sub>eq</sub> (dB)</th>
               <th style="width:20%;" class="num">Predicted L<sub>max</sub> (dB)</th>
-              <th style="width:20%;" class="small">Notes</th>
+              <th style="width:20%;" class="left">Notes</th>
             </tr>
             <tr>
               <td><b>Receiver 1</b></td>
