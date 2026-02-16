@@ -130,7 +130,7 @@ input[type="number"]{width:100%;border:1px solid var(--border);border-radius:10p
               <td class="center"><input type="number" min="0" step="1" inputmode="decimal" id="dist1" placeholder="e.g. 50"></td>
               <td class="num" id="r1Leq"></td>
               <td class="num" id="r1Lmax"></td>
-              <td class="small"> </td>
+              <td><textarea class="note-input" rows="2" placeholder="Enter notes"></textarea></td>
             </tr>
             <tr>
               <td><b>Receiver 2</b></td>
@@ -241,12 +241,12 @@ function buildLeqRows(count){
     tdSrc.appendChild(sel);
 
     const tdN = document.createElement('td'); tdN.className="center";
-    const inpN = makeNumInput(i===0 ? 1 : "");
+    const inpN = makeNumInput(1);
     inpN.id = "leq_n_" + i;
     tdN.appendChild(inpN);
 
     const tdM = document.createElement('td'); tdM.className="center";
-    const inpM = makeNumInput(i===0 ? 15 : "");
+    const inpM = makeNumInput(15);
     inpM.id = "leq_m_" + i;
     tdM.appendChild(inpM);
 
