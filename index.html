@@ -237,7 +237,7 @@ function predictLp(totalLw, dist){
   const lw = Number(totalLw);
   if (!Number.isFinite(lw) || lw <= 0) return "";
   if (!Number.isFinite(d) || d <= 0) return "";
-  return round1(lw - 20*log10(d) - 8);
+  return Math.round(lw - 20*log10(d) - 8);
 }
 
 // ---------- UI builders ----------
